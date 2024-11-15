@@ -4,50 +4,56 @@ import logging
 import platform
 import warnings
 from contextlib import suppress
-from dataclasses import dataclass, field as dataclass_field
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from functools import partial
 from ipaddress import ip_address
 from time import time
-from typing import Awaitable, Callable, Dict, Optional, Tuple, Type, TypeVar, Union
+from typing import Awaitable
+from typing import Callable
+from typing import Dict
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
 
 from playwright._impl._errors import TargetClosedError
-from playwright.async_api import (
-    BrowserContext,
-    BrowserType,
-    Download as PlaywrightDownload,
-    Error as PlaywrightError,
-    Page,
-    Playwright as AsyncPlaywright,
-    PlaywrightContextManager,
-    Request as PlaywrightRequest,
-    Response as PlaywrightResponse,
-    Route,
-)
-from scrapy import Spider, signals
+from playwright.async_api import BrowserContext
+from playwright.async_api import BrowserType
+from playwright.async_api import Download as PlaywrightDownload
+from playwright.async_api import Error as PlaywrightError
+from playwright.async_api import Page
+from playwright.async_api import Playwright as AsyncPlaywright
+from playwright.async_api import PlaywrightContextManager
+from playwright.async_api import Request as PlaywrightRequest
+from playwright.async_api import Response as PlaywrightResponse
+from playwright.async_api import Route
+from scrapy import Spider
+from scrapy import signals
 from scrapy.core.downloader.handlers.http import HTTPDownloadHandler
 from scrapy.crawler import Crawler
-from scrapy.exceptions import NotSupported, ScrapyDeprecationWarning
-from scrapy.http import Request, Response
+from scrapy.exceptions import NotSupported
+from scrapy.exceptions import ScrapyDeprecationWarning
+from scrapy.http import Request
+from scrapy.http import Response
 from scrapy.http.headers import Headers
 from scrapy.responsetypes import responsetypes
 from scrapy.settings import Settings
 from scrapy.utils.defer import deferred_from_coro
 from scrapy.utils.misc import load_object
 from scrapy.utils.reactor import verify_installed_reactor
-from twisted.internet.defer import Deferred, inlineCallbacks
-
+from scrapy_playwright._utils import _encode_body
+from scrapy_playwright._utils import _get_float_setting
+from scrapy_playwright._utils import _get_header_value
+from scrapy_playwright._utils import _get_page_content
+from scrapy_playwright._utils import _is_safe_close_error
+from scrapy_playwright._utils import _maybe_await
+from scrapy_playwright._utils import _ThreadedLoopAdapter
 from scrapy_playwright.headers import use_scrapy_headers
 from scrapy_playwright.page import PageMethod
-from scrapy_playwright._utils import (
-    _ThreadedLoopAdapter,
-    _encode_body,
-    _get_float_setting,
-    _get_header_value,
-    _get_page_content,
-    _is_safe_close_error,
-    _maybe_await,
-)
-
+from twisted.internet.defer import Deferred
+from twisted.internet.defer import inlineCallbacks
 
 __all__ = ["ScrapyPlaywrightDownloadHandler"]
 
@@ -248,7 +254,10 @@ class ScrapyPlaywrightDownloadHandler(HTTPDownloadHandler):
             persistent = True
         elif self.config.cdp_url:
             await self._maybe_connect_remote_devtools()
-            context = await self.browser.new_context(**context_kwargs)
+            if self.browser.contexts:
+                context = self.browser.contexts[0]
+            else:
+                context = await self.browser.new_context(**context_kwargs)
             remote = True
         elif self.config.connect_url:
             await self._maybe_connect_remote()
